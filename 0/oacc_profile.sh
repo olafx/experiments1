@@ -1,0 +1,1 @@
+sudo $(which ncu) oacc
