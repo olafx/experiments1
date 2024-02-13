@@ -8,4 +8,4 @@ CUDA, OpenMP, OpenACC, MPI, etc.
 
 ## 1
 
-NVIDIA video encoding and decoding.
+NVIDIA video and image encoding and decoding.

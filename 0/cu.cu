@@ -8,13 +8,14 @@ CUDA.
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-inline void cuda_check(cudaError_t code)
-{
-    if (code != cudaSuccess)
-    {   std::cerr << "CUDA error: " << cudaGetErrorString(code)
-        << "\nfile: " << __FILE__ << " line: " << __LINE__ << '\n';
-        exit(code);
-    }
+#define cuda_check(call)                                       \
+{                                                              \
+    cudaError_t code = call;                                   \
+    if (code != cudaSuccess)                                   \
+    {   fprintf(stderr, "CUDA error: %s\nfile: %s line: %d\n", \
+            cudaGetErrorString(code), __FILE__, __LINE__);     \
+        exit(code);                                            \
+    }                                                          \
 }
 
 __global__
@@ -33,7 +34,7 @@ void task(
 int main()
 {
     namespace chrono = std::chrono;
-    constexpr size_t n = 1e5, N = 1e5;
+    constexpr size_t n = 1e9, N = 1e5;
     double *x, *y, *z, *d_x, *d_y, *d_z;
     x = (double *) malloc(sizeof(double)*3*n);
     y = x+n; z = y+n;
@@ -49,8 +50,8 @@ int main()
     cuda_check(cudaMemcpy(d_x, x, sizeof(double)*n, cudaMemcpyHostToDevice));
     cuda_check(cudaMemcpy(d_y, y, sizeof(double)*n, cudaMemcpyHostToDevice));
     cuda_check(cudaMemcpy(d_z, z, sizeof(double)*n, cudaMemcpyHostToDevice));
-    constexpr int block_size = 128;
-    constexpr int grid_size = (n+block_size-1)/block_size;
+    constexpr int block_size = 128; // need not be constexpr
+    constexpr int grid_size = (n+block_size-1)/block_size; // need not be constexpr
     task<<<grid_size, block_size>>>(d_x, d_y, d_z, n, N);
     cuda_check(cudaPeekAtLastError()); // for `task` kernel
     cuda_check(cudaMemcpy(z, d_z, sizeof(double)*n, cudaMemcpyDeviceToHost));
